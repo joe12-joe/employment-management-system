@@ -1,0 +1,74 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-50: #eef4ff;
+  --color-brand-100: #dce8ff;
+  --color-brand-200: #bfd4ff;
+  --color-brand-400: #7c9cff;
+  --color-brand-500: #4f7cff;
+  --color-brand-600: #3b63f6;
+  --color-brand-700: #2f4fd7;
+  --color-brand-900: #1f2a5c;
+}
+
+:root { color-scheme: light; }
+html, body, #root { min-height: 100%; }
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(79,124,255,0.12), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(99,102,241,0.08), transparent 55%),
+    #f4f7fb;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.dark body {
+  background:
+    radial-gradient(1200px 600px at 20% -10%, rgba(79,124,255,0.16), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(99,102,241,0.12), transparent 55%),
+    #0b1220;
+  color: #e2e8f0;
+}
+* { box-sizing: border-box; }
+::selection { background: #dce8ff; color: #1e3a8a; }
+
+.dark .bg-white { background-color: #111827 !important; }
+.dark .bg-white\/90 { background-color: rgba(17,24,39,0.92) !important; }
+.dark .bg-white\/95 { background-color: rgba(17,24,39,0.96) !important; }
+.dark .bg-white\/80 { background-color: rgba(17,24,39,0.85) !important; }
+.dark .bg-white\/\[0\.97\], .dark .bg-white\/\[0\.96\] { background-color: rgba(17,24,39,0.97) !important; }
+.dark .bg-slate-50, .dark .bg-\[\#f4f7fb\] { background-color: #0f172a !important; }
+.dark .bg-slate-50\/80 { background-color: rgba(15,23,42,0.8) !important; }
+.dark .bg-slate-50\/70, .dark .bg-slate-50\/60, .dark .bg-slate-50\/50 { background-color: rgba(30,41,59,0.6) !important; }
+.dark .bg-slate-100 { background-color: #1e293b !important; }
+.dark .bg-slate-200 { background-color: #334155 !important; }
+.dark .border-slate-200, .dark .border-slate-200\/80, .dark .border-slate-200\/70, .dark .border-slate-100, .dark .border-slate-300, .dark .border-white\/10 { border-color: #334155 !important; }
+.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]), .dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) { border-color: #334155 !important; }
+.dark .text-slate-900 { color: #f1f5f9 !important; }
+.dark .text-slate-700 { color: #cbd5e1 !important; }
+.dark .text-slate-600, .dark .text-slate-500 { color: #94a3b8 !important; }
+.dark .text-slate-400 { color: #64748b !important; }
+.dark .hover\:bg-slate-50:hover, .dark .hover\:bg-slate-100:hover, .dark .hover\:bg-slate-50\/60:hover, .dark .hover\:bg-slate-50\/70:hover { background-color: #1e293b !important; }
+.dark input, .dark select, .dark textarea { background-color: #0f172a !important; color: #e2e8f0 !important; border-color: #334155 !important; }
+.dark input::placeholder, .dark textarea::placeholder { color: #64748b !important; }
+.dark .shadow-sm, .dark .shadow-md, .dark .shadow-lg, .dark .shadow-xl, .dark .shadow-2xl { box-shadow: 0 4px 24px rgba(0,0,0,0.35) !important; }
+.dark .bg-brand-50, .dark .bg-brand-50\/60 { background-color: rgba(59,99,246,0.15) !important; }
+.dark .text-brand-700, .dark .text-brand-600 { color: #93b4ff !important; }
+.dark .ring-brand-100 { --tw-ring-color: rgba(59,99,246,0.25) !important; }
+.dark .bg-emerald-50 { background-color: rgba(16,185,129,0.12) !important; }
+.dark .text-emerald-700 { color: #6ee7b7 !important; }
+.dark .ring-emerald-100 { --tw-ring-color: rgba(16,185,129,0.2) !important; }
+.dark .bg-amber-50 { background-color: rgba(245,158,11,0.12) !important; }
+.dark .text-amber-700 { color: #fcd34d !important; }
+.dark .ring-amber-100 { --tw-ring-color: rgba(245,158,11,0.2) !important; }
+.dark .bg-red-50 { background-color: rgba(239,68,68,0.12) !important; }
+.dark .text-red-700, .dark .text-red-600 { color: #fca5a5 !important; }
+.dark .ring-red-100 { --tw-ring-color: rgba(239,68,68,0.2) !important; }
+.dark .bg-brand-100 { background-color: rgba(59,99,246,0.2) !important; }
+.dark .text-brand-700 { color: #93b4ff !important; }
+.dark .ring-1.ring-slate-200 { --tw-ring-color: #334155 !important; }
+.dark kbd { background-color: #1e293b !important; color: #94a3b8 !important; }
+.dark .backdrop-blur, .dark .backdrop-blur-xl, .dark .backdrop-blur-sm { backdrop-filter: blur(12px); }
