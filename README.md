@@ -5,7 +5,7 @@ Modular employment management platform covering Core HR, onboarding, time/leave,
 ## Structure
 
 - `apps/web` — React + Vite + TypeScript + Tailwind admin frontend
-- `apps/api` — NestJS + Prisma + MySQL backend (foundation scaffold)
+- `apps/api` — NestJS + Prisma + MongoDB backend (foundation scaffold)
 - `docker/` — local development infrastructure
 - `docs/` — project documentation and slides
 
@@ -36,4 +36,4 @@ Swagger: `http://localhost:3000/api/docs`
 docker compose -f docker/docker-compose.yml up -d
 ```
 
-Starts MySQL 8.4 (`localhost:3306`) and Redis 7 (`localhost:6379`).
+Starts MongoDB 7 (`localhost:27017`) and Redis 7 (`localhost:6379`).
