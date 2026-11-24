@@ -5,8 +5,7 @@ Full-stack employment management platform covering Core HR, onboarding, time/lea
 ## Structure
 
 - `apps/web` — React + Vite + TypeScript + Tailwind admin frontend
-- `apps/api` — NestJS + Prisma + PostgreSQL backend
-- `docker/` — local development infrastructure
+- `apps/api` — NestJS + Prisma + SQLite backend
 - `docs/` — project documentation and slides
 
 ## Frontend
@@ -26,16 +25,11 @@ cd apps/api
 npm install
 cp .env.example .env
 npx prisma generate
+npx prisma migrate dev --name init
 npm run start:dev
 ```
 
 API: `http://localhost:3000/api/v1`  
 Swagger: `http://localhost:3000/api/docs`
 
-## Local infrastructure
-
-```bash
-docker compose -f docker/docker-compose.yml up -d
-```
-
-Starts PostgreSQL 16 (`localhost:5432`) and Redis 7 (`localhost:6379`).
+The SQLite database file is created at `apps/api/prisma/dev.db` (based on `DATABASE_URL`).

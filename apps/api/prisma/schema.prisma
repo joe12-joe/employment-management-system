@@ -3,62 +3,18 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-enum TenantStatus {
-  active
-  suspended
-  archived
-}
-
-enum UserStatus {
-  invited
-  active
-  disabled
-  locked
-}
-
-enum EmployeeStatus {
-  draft
-  onboarding
-  active
-  on_leave
-  suspended
-  terminated
-  archived
-}
-
-enum DepartmentStatus {
-  active
-  inactive
-}
-
-enum ContractType {
-  permanent
-  fixed_term
-  contractor
-  intern
-  part_time
-}
-
-enum ContractStatus {
-  draft
-  active
-  expired
-  terminated
-  superseded
-}
-
 model Tenant {
-  id        String       @id @default(uuid()) @db.Uuid
+  id        String   @id @default(uuid())
   name      String
-  slug      String       @unique
-  status    TenantStatus @default(active)
-  settings  Json         @default("{}")
-  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  slug      String   @unique
+  status    String   @default("active") // active | suspended | archived
+  settings  String   @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   users       User[]
   departments Department[]
@@ -70,15 +26,15 @@ model Tenant {
 }
 
 model User {
-  id           String     @id @default(uuid()) @db.Uuid
-  tenantId     String     @map("tenant_id") @db.Uuid
-  employeeId   String?    @map("employee_id") @db.Uuid
+  id           String    @id @default(uuid())
+  tenantId     String    @map("tenant_id")
+  employeeId   String?   @map("employee_id")
   email        String
-  passwordHash String?    @map("password_hash")
-  status       UserStatus @default(invited)
-  lastLoginAt  DateTime?  @map("last_login_at") @db.Timestamptz(6)
-  createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  passwordHash String?   @map("password_hash")
+  status       String    @default("invited") // invited | active | disabled | locked
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   tenant        Tenant         @relation(fields: [tenantId], references: [id])
   employee      Employee?      @relation(fields: [employeeId], references: [id])
@@ -91,13 +47,13 @@ model User {
 }
 
 model Role {
-  id        String   @id @default(uuid()) @db.Uuid
-  tenantId  String?  @map("tenant_id") @db.Uuid
+  id        String   @id @default(uuid())
+  tenantId  String?  @map("tenant_id")
   name      String
   code      String
   isSystem  Boolean  @default(false) @map("is_system")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   tenant          Tenant?          @relation(fields: [tenantId], references: [id])
   rolePermissions RolePermission[]
@@ -108,7 +64,7 @@ model Role {
 }
 
 model Permission {
-  id          String @id @default(uuid()) @db.Uuid
+  id          String @id @default(uuid())
   code        String @unique
   description String
 
@@ -118,8 +74,8 @@ model Permission {
 }
 
 model RolePermission {
-  roleId       String @map("role_id") @db.Uuid
-  permissionId String @map("permission_id") @db.Uuid
+  roleId       String @map("role_id")
+  permissionId String @map("permission_id")
 
   role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
@@ -129,9 +85,9 @@ model RolePermission {
 }
 
 model UserRole {
-  userId    String   @map("user_id") @db.Uuid
-  roleId    String   @map("role_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  userId    String   @map("user_id")
+  roleId    String   @map("role_id")
+  createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
@@ -141,13 +97,13 @@ model UserRole {
 }
 
 model Department {
-  id        String           @id @default(uuid()) @db.Uuid
-  tenantId  String           @map("tenant_id") @db.Uuid
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
   name      String
   code      String?
-  status    DepartmentStatus @default(active)
-  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  status    String   @default("active") // active | inactive
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   tenant    Tenant     @relation(fields: [tenantId], references: [id])
   employees Employee[]
@@ -157,18 +113,18 @@ model Department {
 }
 
 model Employee {
-  id             String         @id @default(uuid()) @db.Uuid
-  tenantId       String         @map("tenant_id") @db.Uuid
-  employeeNumber String         @map("employee_number")
-  firstName      String         @map("first_name")
-  lastName       String         @map("last_name")
-  workEmail      String?        @map("work_email")
+  id             String    @id @default(uuid())
+  tenantId       String    @map("tenant_id")
+  employeeNumber String    @map("employee_number")
+  firstName      String    @map("first_name")
+  lastName       String    @map("last_name")
+  workEmail      String?   @map("work_email")
   phone          String?
-  status         EmployeeStatus @default(draft)
-  hireDate       DateTime?      @map("hire_date") @db.Date
-  departmentId   String?        @map("department_id") @db.Uuid
-  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  status         String    @default("draft") // draft | onboarding | active | on_leave | suspended | terminated | archived
+  hireDate       DateTime? @map("hire_date")
+  departmentId   String?   @map("department_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   tenant     Tenant               @relation(fields: [tenantId], references: [id])
   department Department?          @relation(fields: [departmentId], references: [id])
@@ -182,15 +138,15 @@ model Employee {
 }
 
 model EmploymentContract {
-  id           String         @id @default(uuid()) @db.Uuid
-  tenantId     String         @map("tenant_id") @db.Uuid
-  employeeId   String         @map("employee_id") @db.Uuid
-  contractType ContractType   @map("contract_type")
-  startDate    DateTime       @map("start_date") @db.Date
-  endDate      DateTime?      @map("end_date") @db.Date
-  status       ContractStatus @default(active)
-  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id           String    @id @default(uuid())
+  tenantId     String    @map("tenant_id")
+  employeeId   String    @map("employee_id")
+  contractType String    @map("contract_type") // permanent | fixed_term | contractor | intern | part_time
+  startDate    DateTime  @map("start_date")
+  endDate      DateTime? @map("end_date")
+  status       String    @default("active") // draft | active | expired | terminated | superseded
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
@@ -199,15 +155,15 @@ model EmploymentContract {
 }
 
 model EmploymentHistory {
-  id            String   @id @default(uuid()) @db.Uuid
-  tenantId      String   @map("tenant_id") @db.Uuid
-  employeeId    String   @map("employee_id") @db.Uuid
+  id            String   @id @default(uuid())
+  tenantId      String   @map("tenant_id")
+  employeeId    String   @map("employee_id")
   eventType     String   @map("event_type")
-  effectiveDate DateTime @map("effective_date") @db.Date
-  fromValues    Json     @default("{}") @map("from_values")
-  toValues      Json     @default("{}") @map("to_values")
+  effectiveDate DateTime @map("effective_date")
+  fromValues    String   @default("{}") @map("from_values")
+  toValues      String   @default("{}") @map("to_values")
   reason        String?
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at")
 
   employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
@@ -216,14 +172,14 @@ model EmploymentHistory {
 }
 
 model AuditEvent {
-  id           String   @id @default(uuid()) @db.Uuid
-  tenantId     String   @map("tenant_id") @db.Uuid
-  actorUserId  String?  @map("actor_user_id") @db.Uuid
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  actorUserId  String?  @map("actor_user_id")
   action       String
   resourceType String   @map("resource_type")
-  resourceId   String?  @map("resource_id") @db.Uuid
-  metadata     Json     @default("{}")
-  occurredAt   DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  resourceId   String?  @map("resource_id")
+  metadata     String   @default("{}")
+  occurredAt   DateTime @default(now()) @map("occurred_at")
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
   actor  User?  @relation("AuditActor", fields: [actorUserId], references: [id])
@@ -233,12 +189,12 @@ model AuditEvent {
 }
 
 model RefreshToken {
-  id        String    @id @default(uuid()) @db.Uuid
-  userId    String    @map("user_id") @db.Uuid
+  id        String    @id @default(uuid())
+  userId    String    @map("user_id")
   tokenHash String    @unique @map("token_hash")
-  expiresAt DateTime  @map("expires_at") @db.Timestamptz(6)
-  revokedAt DateTime? @map("revoked_at") @db.Timestamptz(6)
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
