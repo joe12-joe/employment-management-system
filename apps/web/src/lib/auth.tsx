@@ -1,5 +1,6 @@
-import { createContext, useContext, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { api } from './api'
 
 export type User = {
   id: string
@@ -7,73 +8,82 @@ export type User = {
   email: string
   roles: string[]
   permissions: string[]
+  tenantId?: string
 }
 
-type StoredUser = User & { password: string }
+type AuthResponse = { user: User; accessToken: string; refreshToken: string }
 
 type AuthContextValue = {
   user: User | null
   isAuthenticated: boolean
+  isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (name: string, email: string, password: string) => Promise<void>
+  register: (companyName: string, name: string, email: string, password: string) => Promise<void>
   logout: () => void
   hasPermission: (permission: string) => boolean
 }
 
-const USERS_KEY = 'ems_users'
-const SESSION_KEY = 'ems_session'
-const DEFAULT_PERMS = ['employees.read','employees.create','employees.update','employees.manage_status','departments.read','departments.create','departments.update','users.read','roles.read','audit.read']
+const ACCESS_KEY = 'ems_access_token'
+const REFRESH_KEY = 'ems_refresh_token'
+
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-function readUsers(): StoredUser[] {
-  try { return JSON.parse(localStorage.getItem(USERS_KEY) ?? '[]') as StoredUser[] } catch { return [] }
+function setTokens(accessToken: string, refreshToken: string) {
+  localStorage.setItem(ACCESS_KEY, accessToken)
+  localStorage.setItem(REFRESH_KEY, refreshToken)
 }
-function writeUsers(users: StoredUser[]) { localStorage.setItem(USERS_KEY, JSON.stringify(users)) }
-function toUser(u: StoredUser): User { const { password: _p, ...user } = u; return user }
+function clearTokens() {
+  localStorage.removeItem(ACCESS_KEY)
+  localStorage.removeItem(REFRESH_KEY)
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const session = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null') as { email: string } | null
-      if (!session?.email) return null
-      const found = readUsers().find((u) => u.email.toLowerCase() === session.email.toLowerCase())
-      return found ? toUser(found) : null
-    } catch { return null }
-  })
+  const [user, setUser] = useState<User | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const token = localStorage.getItem(ACCESS_KEY)
+    if (!token) { setIsLoading(false); return }
+    api<User>('/auth/me')
+      .then(setUser)
+      .catch(() => { clearTokens(); setUser(null) })
+      .finally(() => setIsLoading(false))
+  }, [])
 
   const value = useMemo<AuthContextValue>(() => ({
     user,
     isAuthenticated: !!user,
+    isLoading,
     async login(email: string, password: string) {
-      const found = readUsers().find((u) => u.email.toLowerCase() === email.toLowerCase())
-      if (!found || found.password !== password) throw new Error('Invalid email or password.')
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ email: found.email }))
-      setUser(toUser(found))
+      const res = await api<AuthResponse>('/auth/login', {
+        method: 'POST',
+        auth: false,
+        body: JSON.stringify({ email, password }),
+      })
+      setTokens(res.accessToken, res.refreshToken)
+      setUser(res.user)
     },
-    async register(name: string, email: string, password: string) {
-      const users = readUsers()
-      if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) throw new Error('An account with this email already exists.')
-      const newUser: StoredUser = {
-        id: `usr_${Date.now()}`,
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        roles: ['Tenant Admin'],
-        permissions: DEFAULT_PERMS,
-      }
-      users.push(newUser)
-      writeUsers(users)
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ email: newUser.email }))
-      setUser(toUser(newUser))
+    async register(companyName: string, name: string, email: string, password: string) {
+      const res = await api<AuthResponse>('/auth/register', {
+        method: 'POST',
+        auth: false,
+        body: JSON.stringify({ companyName, name, email, password }),
+      })
+      setTokens(res.accessToken, res.refreshToken)
+      setUser(res.user)
     },
     logout() {
-      localStorage.removeItem(SESSION_KEY)
+      const refreshToken = localStorage.getItem(REFRESH_KEY)
+      clearTokens()
       setUser(null)
+      if (refreshToken) {
+        api('/auth/logout', { method: 'POST', auth: false, body: JSON.stringify({ refreshToken }) }).catch(() => {})
+      }
     },
     hasPermission(permission: string) {
       return !!user?.permissions.includes(permission)
     },
-  }), [user])
+  }), [user, isLoading])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

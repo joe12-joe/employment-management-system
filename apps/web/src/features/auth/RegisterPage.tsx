@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth'
 export function RegisterPage() {
   const { isAuthenticated, register } = useAuth()
   const navigate = useNavigate()
+  const [companyName, setCompanyName] = useState('')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,7 +20,7 @@ export function RegisterPage() {
     event.preventDefault()
     setLoading(true)
     try {
-      await register(name, email, password)
+      await register(companyName, name, email, password)
       toast.success('Account created')
       navigate('/', { replace: true })
     } catch (err) {
@@ -52,9 +53,10 @@ export function RegisterPage() {
               <p className="mt-2 text-sm text-slate-600">Enter your details to get started.</p>
             </div>
             <form className="space-y-5" onSubmit={onSubmit}>
+              <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Company name</span><input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10" placeholder="Your company" required /></label>
               <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Full name</span><input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10" placeholder="Your name" required /></label>
               <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Email</span><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 text-sm outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10" placeholder="you@company.com" autoComplete="email" required /></label>
-              <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Password</span><div className="relative"><input type={showPw ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 pr-12 text-sm outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10" placeholder="Create a password" autoComplete="new-password" minLength={6} required /><button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:text-slate-700">{showPw ? 'Hide' : 'Show'}</button></div></label>
+              <label className="block"><span className="mb-1.5 block text-sm font-medium text-slate-700">Password</span><div className="relative"><input type={showPw ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-3 pr-12 text-sm outline-none transition focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10" placeholder="Create a password" autoComplete="new-password" minLength={8} required /><button type="button" onClick={() => setShowPw((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:text-slate-700">{showPw ? 'Hide' : 'Show'}</button></div></label>
               <button type="submit" disabled={loading} className="w-full rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition hover:shadow-xl hover:shadow-brand-600/30 disabled:opacity-60">{loading ? 'Creating account...' : 'Create account'}</button>
             </form>
             <div className="mt-8 border-t border-slate-100 pt-6 text-center"><p className="text-sm text-slate-600">Already have an account? <Link to="/login" className="font-semibold text-brand-600 hover:text-brand-700">Sign in</Link></p></div>
