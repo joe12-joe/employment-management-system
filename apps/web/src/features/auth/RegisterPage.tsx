@@ -21,8 +21,8 @@ export function RegisterPage() {
     setLoading(true)
     try {
       await register(companyName, name, email, password)
-      toast.success('Account created')
-      navigate('/', { replace: true })
+      toast.success('Account created. Please sign in.')
+      navigate('/login', { replace: true })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Unable to create account')
     } finally {

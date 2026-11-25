@@ -70,13 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(res.user)
     },
     async register(companyName: string, name: string, email: string, password: string) {
-      const res = await api<AuthResponse>('/auth/register', {
+      await api<AuthResponse>('/auth/register', {
         method: 'POST',
         auth: false,
         body: JSON.stringify({ companyName, name, email, password }),
       })
-      setTokens(res.accessToken, res.refreshToken, true)
-      setUser(res.user)
     },
     logout() {
       const refreshToken = getStoredToken(REFRESH_KEY)
