@@ -150,6 +150,15 @@ export class AuthService {
     }
   }
 
+  async resetPassword(email: string, newPassword: string) {
+    const user = await this.prisma.user.findFirst({ where: { email: email.trim().toLowerCase() } });
+    if (!user) throw new BadRequestException('No account found for that email.');
+    const passwordHash = await argon2.hash(newPassword);
+    await this.prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+    await this.prisma.refreshToken.updateMany({ where: { userId: user.id, revokedAt: null }, data: { revokedAt: new Date() } });
+    return { ok: true };
+  }
+
   private hashToken(token: string) {
     return createHash('sha256').update(token).digest('hex');
   }
