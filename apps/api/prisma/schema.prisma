@@ -203,3 +203,110 @@ model RefreshToken {
   @@index([userId, expiresAt])
   @@map("refresh_tokens")
 }
+
+model Task {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  title     String
+  assignee  String?
+  status    String   @default("open") // open | in_progress | done
+  dueDate   DateTime? @map("due_date")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@index([tenantId])
+  @@map("tasks")
+}
+
+model Approval {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  type        String
+  requester   String
+  status      String   @default("pending") // pending | approved | rejected
+  details     String   @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  @@index([tenantId])
+  @@map("approvals")
+}
+
+model LeaveRequest {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  employee  String
+  type      String
+  startDate DateTime @map("start_date")
+  endDate   DateTime @map("end_date")
+  status    String   @default("pending")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  @@index([tenantId])
+  @@map("leave_requests")
+}
+
+model Activity {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  actor     String
+  action    String
+  entity    String
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([tenantId])
+  @@map("activities")
+}
+
+model CalendarEvent {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  title     String
+  date      DateTime
+  type      String   @default("event")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([tenantId])
+  @@map("calendar_events")
+}
+
+model OnboardingItem {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  employee  String
+  title     String
+  status    String   @default("pending")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([tenantId])
+  @@map("onboarding_items")
+}
+
+model JobPosting {
+  id         String   @id @default(uuid())
+  tenantId   String   @map("tenant_id")
+  title      String
+  department String?
+  status     String   @default("open")
+  createdAt  DateTime @default(now()) @map("created_at")
+  @@index([tenantId])
+  @@map("job_postings")
+}
+
+model PerformanceReview {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  employee  String
+  period    String
+  status    String   @default("draft")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([tenantId])
+  @@map("performance_reviews")
+}
+
+model PayrollRun {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  period    String
+  status    String   @default("draft")
+  total     String   @default("0")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@index([tenantId])
+  @@map("payroll_runs")
+}
