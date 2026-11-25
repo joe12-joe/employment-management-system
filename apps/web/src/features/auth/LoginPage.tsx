@@ -25,7 +25,7 @@ export function LoginPage() {
     event.preventDefault()
     setLoading(true)
     try {
-      await login(email, password)
+      await login(email, password, remember)
       toast.success('Welcome back!')
       const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/'
       navigate(from, { replace: true })

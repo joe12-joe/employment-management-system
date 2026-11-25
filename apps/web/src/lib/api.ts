@@ -14,7 +14,7 @@ export class ApiError extends Error {
 }
 
 function getToken() {
-  return localStorage.getItem('ems_access_token')
+  return localStorage.getItem('ems_access_token') ?? sessionStorage.getItem('ems_access_token')
 }
 
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {

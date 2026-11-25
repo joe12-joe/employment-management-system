@@ -17,7 +17,7 @@ type AuthContextValue = {
   user: User | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string, remember?: boolean) => Promise<void>
   register: (companyName: string, name: string, email: string, password: string) => Promise<void>
   logout: () => void
   hasPermission: (permission: string) => boolean
@@ -25,16 +25,22 @@ type AuthContextValue = {
 
 const ACCESS_KEY = 'ems_access_token'
 const REFRESH_KEY = 'ems_refresh_token'
+const REMEMBER_KEY = 'ems_remember'
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
-function setTokens(accessToken: string, refreshToken: string) {
-  localStorage.setItem(ACCESS_KEY, accessToken)
-  localStorage.setItem(REFRESH_KEY, refreshToken)
+function storageFor(remember: boolean) { return remember ? localStorage : sessionStorage }
+function getStoredToken(key: string) { return localStorage.getItem(key) ?? sessionStorage.getItem(key) }
+function setTokens(accessToken: string, refreshToken: string, remember: boolean) {
+  clearTokens()
+  const s = storageFor(remember)
+  s.setItem(ACCESS_KEY, accessToken)
+  s.setItem(REFRESH_KEY, refreshToken)
+  localStorage.setItem(REMEMBER_KEY, remember ? '1' : '0')
 }
 function clearTokens() {
-  localStorage.removeItem(ACCESS_KEY)
-  localStorage.removeItem(REFRESH_KEY)
+  localStorage.removeItem(ACCESS_KEY); localStorage.removeItem(REFRESH_KEY); localStorage.removeItem(REMEMBER_KEY)
+  sessionStorage.removeItem(ACCESS_KEY); sessionStorage.removeItem(REFRESH_KEY)
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -42,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem(ACCESS_KEY)
+    const token = getStoredToken(ACCESS_KEY)
     if (!token) { setIsLoading(false); return }
     api<User>('/auth/me')
       .then(setUser)
@@ -54,13 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     isAuthenticated: !!user,
     isLoading,
-    async login(email: string, password: string) {
+    async login(email: string, password: string, remember = true) {
       const res = await api<AuthResponse>('/auth/login', {
         method: 'POST',
         auth: false,
         body: JSON.stringify({ email, password }),
       })
-      setTokens(res.accessToken, res.refreshToken)
+      setTokens(res.accessToken, res.refreshToken, remember)
       setUser(res.user)
     },
     async register(companyName: string, name: string, email: string, password: string) {
@@ -69,11 +75,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         auth: false,
         body: JSON.stringify({ companyName, name, email, password }),
       })
-      setTokens(res.accessToken, res.refreshToken)
+      setTokens(res.accessToken, res.refreshToken, true)
       setUser(res.user)
     },
     logout() {
-      const refreshToken = localStorage.getItem(REFRESH_KEY)
+      const refreshToken = getStoredToken(REFRESH_KEY)
       clearTokens()
       setUser(null)
       if (refreshToken) {
