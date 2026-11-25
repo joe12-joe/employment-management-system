@@ -57,3 +57,21 @@ export class ReportsController {
   constructor(private readonly svc: OperationsService) {}
   @Get('summary') get(@Req() req: any) { return this.svc.dashboard(req.user.tenantId); }
 }
+
+@ApiTags('Settings') @ApiBearerAuth() @UseGuards(JwtAuthGuard)
+@Controller('settings')
+export class SettingsController {
+  constructor(private readonly svc: OperationsService) {}
+  @Get() get(@Req() req: any) { return this.svc.getSettings(req.user.tenantId); }
+  @Patch() update(@Req() req: any, @Body() dto: any) { return this.svc.updateSettings(req.user.tenantId, dto); }
+}
+
+@ApiTags('ImportExport') @ApiBearerAuth() @UseGuards(JwtAuthGuard)
+@Controller('import-export')
+export class ImportExportController {
+  constructor(private readonly svc: OperationsService) {}
+  @Get('employees/export') exportEmployees(@Req() req: any) { return this.svc.exportEmployees(req.user.tenantId); }
+  @Get('departments/export') exportDepartments(@Req() req: any) { return this.svc.exportDepartments(req.user.tenantId); }
+  @Get('audit/export') exportAudit(@Req() req: any) { return this.svc.exportAudit(req.user.tenantId); }
+  @Post('employees/import') importEmployees(@Req() req: any, @Body() body: { csv: string }) { return this.svc.importEmployees(req.user.tenantId, body.csv || ''); }
+}
