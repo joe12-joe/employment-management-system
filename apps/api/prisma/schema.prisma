@@ -101,6 +101,7 @@ model Department {
   tenantId  String   @map("tenant_id")
   name      String
   code      String?
+  headName  String?  @map("head_name")
   status    String   @default("active") // active | inactive
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -120,6 +121,7 @@ model Employee {
   lastName       String    @map("last_name")
   workEmail      String?   @map("work_email")
   phone          String?
+  jobTitle       String?   @map("job_title")
   status         String    @default("draft") // draft | onboarding | active | on_leave | suspended | terminated | archived
   hireDate       DateTime? @map("hire_date")
   departmentId   String?   @map("department_id")

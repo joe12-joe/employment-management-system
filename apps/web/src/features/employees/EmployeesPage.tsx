@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { useAuth } from '@/lib/auth'
+import { apiClient } from '@/lib/api'
 
 type Employee = { id: string; name: string; email: string; department: string; title: string; status: 'Active' | 'Onboarding' | 'On Leave' | 'Terminated' }
 const schema = z.object({ name: z.string().min(2, 'Name is required'), email: z.string().email('Valid email required'), department: z.string().min(2, 'Department is required'), title: z.string().min(2, 'Job title is required') })
@@ -18,6 +19,7 @@ const statusStyles: Record<Employee['status'], string> = { Active: 'bg-emerald-5
 export function EmployeesPage() {
   const { hasPermission } = useAuth()
   const [employees, setEmployees] = useState<Employee[]>([])
+  const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'All' | Employee['status']>('All')
   const [sortBy, setSortBy] = useState<'name' | 'department' | 'status'>('name')
@@ -30,6 +32,13 @@ export function EmployeesPage() {
   const canManageStatus = hasPermission('employees.manage_status')
   const form = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { name: '', email: '', department: '', title: '' } })
 
+  async function load() {
+    try { setLoading(true); setEmployees(await apiClient.get<Employee[]>('/employees')) }
+    catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to load employees') }
+    finally { setLoading(false) }
+  }
+  useEffect(() => { load() }, [])
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase()
     return employees
@@ -39,25 +48,33 @@ export function EmployeesPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize))
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize)
 
-  function onCreate(values: FormValues) {
-    const id = `EMP-${String(employees.length + 1).padStart(3, '0')}`
-    setEmployees((prev) => [{ id, ...values, status: 'Onboarding' }, ...prev])
-    toast.success('Employee created', { description: `${values.name} added.` })
-    form.reset(); setOpen(false)
+  async function onCreate(values: FormValues) {
+    try {
+      const created = await apiClient.post<Employee>('/employees', values)
+      setEmployees((prev) => [created, ...prev])
+      toast.success('Employee created', { description: `${values.name} added.` })
+      form.reset(); setOpen(false)
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to create employee') }
   }
-  function confirmTerminate() {
+  async function confirmTerminate() {
     if (!confirmId) return
-    setEmployees((prev) => prev.map((e) => e.id === confirmId ? { ...e, status: 'Terminated' } : e))
-    toast.success('Employee status updated')
-    setConfirmId(null)
+    try {
+      const updated = await apiClient.patch<Employee>(`/employees/${confirmId}/status`, { status: 'Terminated' })
+      setEmployees((prev) => prev.map((e) => e.id === confirmId ? updated : e))
+      toast.success('Employee status updated')
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to update status') }
+    finally { setConfirmId(null) }
   }
   function toggleAll(checked: boolean) { setSelected(checked ? paged.map((e) => e.id) : []) }
   function toggleOne(id: string) { setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]) }
-  function bulkTerminate() {
+  async function bulkTerminate() {
     if (!selected.length) return
-    setEmployees((prev) => prev.map((e) => selected.includes(e.id) ? { ...e, status: 'Terminated' } : e))
-    toast.success('Bulk status update', { description: `${selected.length} employee(s) updated.` })
-    setSelected([])
+    try {
+      await Promise.all(selected.map((id) => apiClient.patch(`/employees/${id}/status`, { status: 'Terminated' })))
+      setEmployees((prev) => prev.map((e) => selected.includes(e.id) ? { ...e, status: 'Terminated' } : e))
+      toast.success('Bulk status update', { description: `${selected.length} employee(s) updated.` })
+      setSelected([])
+    } catch (err) { toast.error(err instanceof Error ? err.message : 'Failed to update employees') }
   }
 
   return (
@@ -96,7 +113,8 @@ export function EmployeesPage() {
                   <td className="px-5 py-4">{canManageStatus && e.status !== 'Terminated' ? <button onClick={() => setConfirmId(e.id)} className="text-sm font-medium text-red-600 hover:text-red-700">Terminate</button> : <span className="text-slate-400">—</span>}</td>
                 </tr>
               ))}
-              {paged.length === 0 && <tr><td colSpan={6} className="px-5 py-12 text-center text-slate-500">No employees found.</td></tr>}
+              {!loading && paged.length === 0 && <tr><td colSpan={6} className="px-5 py-12 text-center text-slate-500">No employees found.</td></tr>}
+              {loading && <tr><td colSpan={6} className="px-5 py-12 text-center text-slate-500">Loading employees...</td></tr>}
             </tbody>
           </table>
         </div>
